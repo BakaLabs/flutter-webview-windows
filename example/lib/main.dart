@@ -136,7 +136,15 @@ class _ExampleBrowser extends State<ExampleBrowser> {
                   onPressed: () {
                     _controller.openDevTools();
                   },
-                )
+                ),
+                IconButton(
+                  icon: Icon(Icons.cookie),
+                  tooltip: 'Cookies',
+                  splashRadius: 20,
+                  onPressed: () async {
+                    print(await _controller.getCookies());
+                  },
+                ),
               ]),
             ),
             Expanded(

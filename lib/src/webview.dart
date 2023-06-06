@@ -561,6 +561,20 @@ class WebviewController extends ValueNotifier<WebviewValue> {
     return _methodChannel
         .invokeMethod('setSize', [size.width, size.height, scaleFactor]);
   }
+
+  Future<String?> getCookies() async {
+    if (_isDisposed) {
+      return null;
+    }
+    assert(value.isInitialized);
+
+    final dynamic result = await _methodChannel.invokeMethod('get_cookies');
+    if (result is String || result == null) {
+      return result;
+    }
+
+    return null;
+  }
 }
 
 class Webview extends StatefulWidget {

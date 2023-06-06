@@ -6,6 +6,9 @@
 #include <windows.ui.composition.h>
 #include <winrt/base.h>
 
+#include <flutter/method_channel.h>
+#include <flutter/encodable_value.h>
+
 #include <functional>
 
 class WebviewHost;
@@ -209,6 +212,8 @@ class Webview {
     contains_fullscreen_element_changed_callback_ = std::move(callback);
   }
 
+  void GetCookies(std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> completer);
+
  private:
   HWND hwnd_;
   bool owns_window_;
@@ -217,6 +222,7 @@ class Webview {
   wil::com_ptr<ICoreWebView2CompositionController> composition_controller_;
   wil::com_ptr<ICoreWebView2Controller3> webview_controller_;
   wil::com_ptr<ICoreWebView2> webview_;
+  wil::com_ptr<ICoreWebView2CookieManager> cookie_manager_;
   wil::com_ptr<ICoreWebView2DevToolsProtocolEventReceiver>
       devtools_protocol_event_receiver_;
   wil::com_ptr<ICoreWebView2Settings2> settings2_;

@@ -53,6 +53,8 @@ constexpr auto kErrorNotSupported = "not_supported";
 constexpr auto kScriptFailed = "script_failed";
 constexpr auto kMethodFailed = "method_failed";
 
+constexpr auto kMethodGetCookies = "get_cookies";
+
 static const std::optional<std::pair<double, double>> GetPointFromArgs(
     const flutter::EncodableValue* args) {
   const flutter::EncodableList* list =
@@ -686,6 +688,11 @@ void WebviewBridge::HandleMethodCall(
                                                : std::make_optional(*value));
       return result->Success();
     }
+  }
+
+  if (method_call.method_name().compare(kMethodGetCookies) == 0) {
+    webview_->GetCookies(std::move(result));
+    return;
   }
 
   result->NotImplemented();

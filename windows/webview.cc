@@ -8,6 +8,7 @@
 #include "util/composition.desktop.interop.h"
 #include "util/string_converter.h"
 #include "webview_host.h"
+#include "strconv.h"
 
 using namespace Microsoft::WRL;
 
@@ -69,6 +70,12 @@ Webview::Webview(
   if (!webview_controller_ ||
       FAILED(webview_controller_->get_CoreWebView2(webview_.put()))) {
     return;
+  }
+
+  wil::com_ptr<ICoreWebView2_2> webview2;
+  HRESULT hrs = webview_->QueryInterface(IID_PPV_ARGS(&webview2));
+  if (SUCCEEDED(hrs)) {
+    webview2->get_CookieManager(&cookie_manager_);
   }
 
   webview_controller_->put_BoundsMode(COREWEBVIEW2_BOUNDS_MODE_USE_RAW_PIXELS);
@@ -794,4 +801,42 @@ bool Webview::ClearVirtualHostNameMapping(const std::string& hostName) {
 
   return webview->ClearVirtualHostNameToFolderMapping(
       util::Utf16FromUtf8(hostName).c_str());
+}
+
+void Webview::GetCookies(std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> completer) {
+  if (cookie_manager_) {
+    cookie_manager_->GetCookies(
+      NULL,
+      Callback<ICoreWebView2GetCookiesCompletedHandler>(
+        [completer(std::move(completer))](HRESULT error_code, ICoreWebView2CookieList* list) -> HRESULT {
+          std::wstring result;
+          UINT cookie_list_size;
+          list->get_Count(&cookie_list_size);
+
+          if (cookie_list_size != 0)
+          {
+            for (UINT i = 0; i < cookie_list_size; ++i) {
+              wil::com_ptr<ICoreWebView2Cookie> cookie;
+              list->GetValueAtIndex(i, &cookie);
+              if (cookie.get()) {
+                wil::unique_cotaskmem_string name;
+                wil::unique_cotaskmem_string value;
+
+                cookie->get_Name(&name);
+                cookie->get_Value(&value);
+
+                result += std::wstring(name.get()) + L"=" + std::wstring(value.get());
+                if (i != cookie_list_size - 1) {
+                  result += L"; ";
+                }
+              }
+            }
+          }
+
+          completer->Success(flutter::EncodableValue(wide_to_utf8(result)));
+          return S_OK;
+        }).Get());
+  } else {
+    completer->Error("0", "webview not created");
+  }
 }
